@@ -1,4 +1,4 @@
-// ctl v2 — RunPod操作 + ComfyUI操作 + LoRA読込
+// ctl v2
 const OLD='https://little-frost-d979.sute-trial174.workers.dev';
 const JH={'Content-Type':'application/javascript; charset=utf-8'};
 const TX={'Content-Type':'text/plain; charset=utf-8'};
@@ -12,7 +12,7 @@ const old=async d=>(await fetch(OLD '/?do='+d+'&t='+Date.now())).text();
 async function pid(){
  const s=await old('status');
  const m=/id=([A-Za-z0-9]+)/.exec(s);
- if(!m)throw new Error('pod id不明: '+s.slice(0,140));
+ if(!m)throw new Error('no pod');
  return m[1];
 }
 async function pod(p,o,ms){
@@ -26,7 +26,7 @@ async function pod(p,o,ms){
 const pg=(p,ms)=>pod(p,null,ms);
 const pp=(p,j,ms)=>pod(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(j)},ms);
 function b64(b){const u=new Uint8Array(b);let s='';const C=0x8000;for(let i=0;i<u.length;i+=C)s+=String.fromCharCode.apply(null,u.subarray(i,i+C));return btoa(s);}
-async function oinfo(c){const r=await pg('/object_info/'+c);if(r.s!==200)throw new Error(c+' '+r.s+' '+r.b.slice(0,80));return JSON.parse(r.b);}
+async function oinfo(c){const r=await pg('/object_info/'+c);if(r.s!==200)throw new Error(c+' '+r.s);return JSON.parse(r.b);}
 const ckpt=async()=>(await oinfo('CheckpointLoaderSimple')).CheckpointLoaderSimple.input.required.ckpt_name[0][0];
 const loras=async()=>(await oinfo('LoraLoader')).LoraLoader.input.required.lora_name[0];
 function wf(a){
@@ -45,7 +45,7 @@ function wf(a){
 async function gen(qs){
  const a={
   p:qs.get('p')||'hitori gotoh, bocchi the rock',
-  n:qs.get('neg')||'lowres, bad anatomy, worst quality, jpeg artifacts',
+  n:qs.get('neg')||'lowres, bad anatomy, worst quality',
   lora:qs.get('lora')||'',
   lw:parseFloat(qs.get('lw')||'0.8'),
   w:parseInt(qs.get('w')||'832'),h:parseInt(qs.get('h')||'1216'),
@@ -61,7 +61,7 @@ async function gen(qs){
 }
 async function hist(id){
  const r=await pg('/history/'+id);
- if(r.s!==200)return {done:false,msg:r.b.slice(0,120)};
+ if(r.s!==200)return {done:false};
  const e=JSON.parse(r.b)[id];
  if(!e)return {done:false};
  const f=[];
@@ -69,17 +69,10 @@ async function hist(id){
  return {done:true,files:f};
 }
 async function view(name){
- const c=new AbortController(),to=setTimeout(()=>c.abort(),30000);
  try{
-  const r=await fetch('https://'+(await pid())+'-8188.proxy.runpod.net/view?filename='+encodeURIComponent(name),{signal:c.signal});
+  const r=await fetch('https://'+(await pid())+'-8188.proxy.runpod.net/view?filename='+encodeURIComponent(name));
   return 'data:'+(r.headers.get('Content-Type')||'image/png')+';base64,'+b64(await r.arrayBuffer());
  }catch(e){return 'ERR '+e.message;}
- finally{clearTimeout(to);}
 }
 async function diag(){
- let o='';
- try{o+='pod: '+(await old('status'))+'\n';}catch(e){o+='pod ERR '+e.message+'\n';}
- o+='ready: '+(await pg('/system_stats',8000)).s+'\n';
- try{o+='ckpt: '+(await ckpt())+'\n';}catch(e){o+='ckpt ERR '+e.message+'\n';}
- try{const L=await loras();o+='loras('+L.length '): '+L.slice(0,15).join(' | ')+'\n';}catch(e){o+='loras ERR '+e.message+'\n';}
- for(const m of 
+ let 
