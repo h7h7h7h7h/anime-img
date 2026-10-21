@@ -1,5 +1,6 @@
-const A='https://little-frost-d979.sute-trial174.workers.dev',H={'Content-Type':'text/html; charset=utf-8'};
-const G=async d=>(await fetch(A+'/?do='+d+'&t='+Date.now())).text();
+let E;const A='https://little-frost-d979.sute-trial174.workers.dev',H={'Content-Type':'text/html; charset=utf-8'};
+const F=q=>E&&E.OLD?E.OLD.fetch('https://a/?'+q):fetch(A+'/?'+q);
+const G=async d=>(await F('do='+d+'&t='+Date.now())).text();
 async function ID(){const s=await G('status'),m=/id=([A-Za-z0-9]+)/.exec(s);if(!m)throw Error('no pod');return m[1]}
 async function PD(p,o,ms){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms||25000);try{const r=await fetch('https://'+(await ID())+'-8188.proxy.runpod.net'+p,Object.assign({signal:c.signal},o||{}));return{s:r.status,b:await r.text()}}catch(e){return{s:0,b:'ERR '+e.message}}finally{clearTimeout(t)}}
 const PG=(p,ms)=>PD(p,null,ms),PJ=(p,b,ms)=>PD(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)},ms);
@@ -17,7 +18,7 @@ async function PGS(){const f=(JSON.parse(await G('list')).files||[]).reverse();r
 const U=HD+'<a href="?do=status">状態</a> <a href="?do=start">起動</a> <a href="?do=ready">確認</a> <a href="?do=stop">停止</a> <a href="?do=diag">診断</a> <a href="?do=loras">LoRA</a> <a href="?do=prune">整理</a><p><textarea id=p style="width:100%;height:80px;background:#111119;color:#dbe3ff;border:1px solid #262634;border-radius:8px;padding:6px">hitori gotoh, bocchi the rock, pink hair, blue eyes, yellow hair bow, glossy skin, blush</textarea><p><button onclick=gg(1)>生成1</button> <button onclick=gg(5)>生成5</button> <a href="?do=pg">一覧</a><script>function gg(n){location.href="?do=g&n="+n+"&p="+encodeURIComponent(p.value)}</script>'+BK;
 async function DIA(){let o='';try{o+='pod '+(await G('status'))+'\n'}catch(e){o+='pod ERR\n'}o+='ready '+(await PG('/system_stats',8000)).s+'\n';try{o+='ckpt '+(await CK())+'\n'}catch(e){o+='ckpt ERR\n'}try{const L=await LR();o+='loras '+L.length+' '+L.slice(0,20).join(',')}catch(e){o+='loras ERR'}return o}
 async function LDL(u){if(!u)return 'no url';for(const p of ['/manager/queue/install_model','/api/manager/queue/install_model']){if((await PJ(p,{url:u,type:'loras'},20000)).s==200)return 'OK'}return 'ERR'}
-export default{async fetch(e){const q=new URL(e.url).searchParams,d=(q.get('do')||'ui').toLowerCase();try{switch(d){
+export default{async fetch(e,env){E=env;const q=new URL(e.url).searchParams,d=(q.get('do')||'ui').toLowerCase();try{switch(d){
 case 'ui':return new Response(U,H);
 case 'g':return new Response(await GO(q),H);
 case 'pg':return new Response(await PGS(),H);
@@ -26,5 +27,5 @@ case 'loras':return new Response(JSON.stringify(await LR()));
 case 'ckpt':return new Response(await CK());
 case 'gen':return new Response(await GEN(q));
 case 'loradl':return new Response(await LDL(q.get('url')));
-default:{const r=await fetch(A+'/?'+q.toString()+'&t='+Date.now());return new Response(await r.text(),{'Content-Type':r.headers.get('Content-Type')||'text/plain; charset=utf-8'})}
+default:{const r=await F(q.toString()+'&t='+Date.now());return new Response(await r.text(),{'Content-Type':r.headers.get('Content-Type')||'text/plain; charset=utf-8'})}
 }}catch(x){return new Response('ERR '+x.message)}}}
