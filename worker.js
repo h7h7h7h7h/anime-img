@@ -8,7 +8,7 @@ function out(v,qs){
  if(cb)return new Response('window['+JSON.stringify(cb)+']='+JSON.stringify(s)+';',{headers:JH});
  return new Response(s,{headers:TX});
 }
-const old=async d=>(await fetch(OLD '/?do='+d+'&t='+Date.now())).text();
+const old=async d=>(await fetch(OLD+'/?do='+d+'&t='+Date.now())).text();
 async function pid(){
  const s=await old('status');
  const m=/id=([A-Za-z0-9]+)/.exec(s);
@@ -75,4 +75,44 @@ async function view(name){
  }catch(e){return 'ERR '+e.message;}
 }
 async function diag(){
- let 
+ let o='';
+ try{o+='pod '+(await old('status'))+'\n';}catch(e){o+='pod ERR\n';}
+ o+='ready '+(await pg('/system_stats',8000)).s+'\n';
+ try{o+='ckpt '+(await ckpt())+'\n';}catch(e){o+='ckpt ERR\n';}
+ try{const L=await loras();o+='loras '+L.length+' '+L.slice(0,20).join(',')+'\n';}catch(e){o+='loras ERR\n';}
+ return o;
+}
+async function loradl(url){
+ if(!url)return 'no url';
+ for(const p of ['/manager/queue/install_model','/api/manager/queue/install_model']){
+  const r=await pp(p,{url:url,type:'loras'},20000);
+  if(r.s===200)return 'OK';
+ }
+ return 'ERR';
+}
+export default {
+ async fetch(req){
+  const qs=new URL(req.url).searchParams;
+  const d=(qs.get('do')||'ui').toLowerCase();
+  try{
+   switch(d){
+    case 'ui': return new Response('<h3>CTL ok</h3>',{headers:{'Content-Type':'text/html; charset=utf-8'}});
+    case 'status': case 'start': case 'ready': case 'stop': case 'rebuild':
+     return out(await old(d),qs);
+    case 'clean': return out(await old('prune'),qs);
+    case 'last': return out(await old('last'),qs);
+    case 'diag': return out(await diag(),qs);
+    case 'loras': { try{ return out(JSON.stringify(await loras()),qs); }catch(e){ return out('ERR '+e.message,qs); } }
+    case 'ckpt': { try{ return out(await ckpt(),qs); }catch(e){ return out('ERR '+e.message,qs); } }
+    case 'gen': return out(await gen(qs),qs);
+    case 'img': return out(JSON.stringify(await hist(qs.get('id'))),qs);
+    case 'push': return out(await old('push&name='+encodeURIComponent(qs.get('name')||'')),qs);
+    case 'list': return out(await old('list'),qs);
+    case 'file': return out(await view(qs.get('name')),qs);
+    case 'loradl': return out(await loradl(qs.get('url')),qs);
+    case 'ping': return out('PONG',qs);
+    default: return out('unknown',qs);
+   }
+  }catch(e){ return out('ERR '+e.message,qs); }
+ }
+};
