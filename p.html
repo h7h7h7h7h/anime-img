@@ -1,5 +1,4 @@
-<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>CTL</title>
-<style>
+<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>CTL</title><style>
 body{margin:8px;background:#0d0d12;color:#e9e9f2;font:14px system-ui}
 h3{color:#8fa8ff;margin:0 0 8px}
 a{color:#8fa8ff}
@@ -24,7 +23,7 @@ img{width:31%;margin:1%;border-radius:6px;vertical-align:top}
 var A="https://little-frost-d979.sute-trial174.workers.dev",PID="",busy=0,out=document.getElementById("out");
 function cbp(v){var m=/id=([A-Za-z0-9]+)/.exec(v);if(m)PID=m[1];document.getElementById("pod").textContent=v.replace(/\n/g," | ");setTimeout(st,200)}
 function sp(){var s=document.createElement("script");s.src=A+"/?do=status&cb=cbp&t="+Date.now();s.onload=function(){s.remove()};s.onerror=function(){s.remove()};document.body.appendChild(s)}
-function P(p){return fetch("?do=pod&p="+encodeURIComponent(p)+(PID?"&pid="+PID:""))).then(function(r){return r.text()})}
+function P(p){return fetch("?do=pod&p="+encodeURIComponent(p)+(PID?"&pid="+PID:"")).then(function(r){return r.text()})}
 function J(p){return P(p).then(function(t){return JSON.parse(t)})}
 async function st(){if(busy)return;busy=1;try{
 var r=await fetch("?do=pod&p=/system_stats"+(PID?"&pid="+PID:""));
