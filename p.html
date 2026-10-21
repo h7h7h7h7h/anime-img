@@ -1,0 +1,39 @@
+<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>CTL</title>
+<style>
+body{margin:8px;background:#0d0d12;color:#e9e9f2;font:14px system-ui}
+h3{color:#8fa8ff;margin:0 0 8px}
+a{color:#8fa8ff}
+.card{background:#14141c;border:1px solid #23232f;border-radius:8px;padding:8px;margin:6px 0}
+.mono{font-size:12px;color:#c9c9d8;word-break:break-all}
+textarea{width:100%;height:80px;background:#111119;color:#dbe3ff;border:1px solid #262634;border-radius:8px;padding:6px;box-sizing:border-box}
+button{background:#2a2a3c;color:#dbe3ff;border:1px solid #3a3a52;border-radius:8px;padding:8px 14px;font-size:14px}
+img{width:31%;margin:1%;border-radius:6px;vertical-align:top}
+#pod{color:#9fe6a0;font-size:12px}
+</style>
+<h3>CTL</h3>
+<div class=card id=pod>pod ...</div>
+<div class=card>ComfyUI <b id=cui>...</b></div>
+<div class=card>LoRA<div class=mono id=lr></div></div>
+<div class=card>ControlNet<div class=mono id=cn></div></div>
+<div class=card>Queue <b id=qq>...</b></div>
+<p><a href="?do=start">起動</a> / <a href="?do=stop">停止</a> / <a href="?do=ready">確認</a> / <a href="?do=diag">診断</a></p>
+<textarea id=p>hitori gotoh, bocchi the rock, pink hair, blue eyes, yellow hair bow, glossy skin, blush</textarea>
+<p><button onclick=gg(1)>生成1</button> <button onclick=gg(5)>生成5</button> <button onclick=rst()>更新</button></p>
+<div id=out></div>
+<script>
+var A="https://little-frost-d979.sute-trial174.workers.dev",PID="",busy=0,out=document.getElementById("out");
+function cbp(v){var m=/id=([A-Za-z0-9]+)/.exec(v);if(m)PID=m[1];document.getElementById("pod").textContent=v.replace(/\n/g," | ");setTimeout(st,200)}
+function sp(){var s=document.createElement("script");s.src=A+"/?do=status&cb=cbp&t="+Date.now();s.onload=function(){s.remove()};s.onerror=function(){s.remove()};document.body.appendChild(s)}
+function P(p){return fetch("?do=pod&p="+encodeURIComponent(p)+(PID?"&pid="+PID:"").then(function(r){return r.text()})}
+function J(p){return P(p).then(function(t){return JSON.parse(t)})}
+async function st(){if(busy)return;busy=1;try{
+var r=await fetch("?do=pod&p=/system_stats"+(PID?"&pid="+PID:""));
+document.getElementById("cui").textContent=r.status==200?"OK 200":"NG "+r.status;
+try{document.getElementById("lr").textContent=(await J("/object_info/LoraLoader")).LoraLoader.input.required.lora_name[0].join(", ")}catch(e){document.getElementById("lr").textContent="ERR"}
+try{document.getElementById("cn").textContent=((await J("/object_info/ControlNetLoader")).ControlNetLoader.input.required.control_net_name[0].join(", "))||"なし"}catch(e){document.getElementById("cn").textContent="ERR"}
+try{var q=await J("/queue");document.getElementById("qq").textContent="実行中 "+(q.queue_running||[]).length+" / 待ち "+(q.queue_pending||[]).length}catch(e){document.getElementById("qq").textContent="ERR"}
+try{var h=await J("/history"),k=Object.keys(h),arr=[];for(var i=k.length-1;i>=0;i--){var e=h[k[i]];for(var j in e.outputs){(e.outputs[j].images||[]).forEach(function(m){arr.push(m.filename)})}}arr=arr.slice(-12).reverse();var b="";arr.forEach(function(f){var u="https://"+PID+"-8188.proxy.runpod.net/view?filename="+encodeURIComponent(f);b+='<a target=_blank href="'+u '"><img src="'+u '"></a>'});out.innerHTML=b}catch(e){}}catch(e){document.getElementById("cui").textContent="ERR "+e.message}busy=0}
+function gg(n){location.href="?do=g&n="+n+"&p="+encodeURIComponent(document.getElementById("p").value)+(PID?"&pid="+PID:"")}
+function rst(){st();sp()}
+st();sp();setInterval(st,3000);setInterval(sp,15000);
+</script>
