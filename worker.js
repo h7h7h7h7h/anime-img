@@ -9,7 +9,7 @@ async function OI(c){const r=await PG('/object_info/'+c);if(r.s!=200)throw Error
 const CK=async()=>(await OI('CheckpointLoaderSimple')).CheckpointLoaderSimple.input.required.ckpt_name[0][0];
 const LR=async()=>(await OI('LoraLoader')).LoraLoader.input.required.lora_name[0];
 function WF(a){const n={};n[1]={class_type:'CheckpointLoaderSimple',inputs:{ckpt_name:a.ck}};let M=[1,0],C=[1,1];if(a.lora){n[2]={class_type:'LoraLoader',inputs:{lora_name:a.lora,strength_model:a.lw,strength_clip:a.lw,model:M,clip:C}};M=[2,0];C=[2,1]}n[3]={class_type:'CLIPTextEncode',inputs:{text:a.p,clip:C}};n[4]={class_type:'CLIPTextEncode',inputs:{text:a.n,clip:C}};n[5]={class_type:'EmptyLatentImage',inputs:{width:a.w,height:a.h,batch_size:1}};n[6]={class_type:'KSampler',inputs:{seed:a.sd,steps:a.st,cfg:a.cfg,sampler_name:a.sm,scheduler:'normal',denoise:1,model:M,positive:[3,0],negative:[4,0],latent_image:[5,0]}};n[7]={class_type:'VAEDecode',inputs:{samples:[6,0],vae:[1,2]}};n[8]={class_type:'SaveImage',inputs:{filename_prefix:a.f,images:[7,0]}};return n}
-async function GEN(q){const a={p:q.get('p')||'hitori gotoh, bocchi the rock',n:q.get('neg')||'lowres, bad anatomy, worst quality',lora:q.get('lora')||'bocchi_gotoh_xl.safetensors',lw:+(q.get('lw')||0.85),w:+(q.get('w')||832),h:+(q.get('h')||1216),st:+(q.get('steps')||28),cfg:+(q.get('cfg')||6),sm:q.get('sm')||'euler_ancestral',sd:+(q.get('seed')||Math.floor(Math.random()*1e9)),f:q.get('f')||'bot',ck:q.get('ck')||await CK()};const r=await PJ('/prompt',{prompt:WF(a),client_id:'c'});if(r.s!=200)return 'ERR '+r.s+'+'+r.b.slice(0,200);return JSON.parse(r.b).prompt_id}
+async function GEN(q){const a={p:q.get('p')||'hitori gotoh, bocchi the rock',n:q.get('neg')||'lowres, bad anatomy, worst quality',lora:q.get('lora')||'bocchi_gotoh_xl.safetensors',lw:+(q.get('lw')||0.85),w:+(q.get('w')||832),h:+(q.get('h')||1216),st:+(q.get('steps')||28),cfg:+(q.get('cfg')||6),sm:q.get('sm')||'euler_ancestral',sd:+(q.get('seed')||Math.floor(Math.random()*1e9)),f:q.get('f')||'bot',ck:q.get('ck')||await CK()};const r=await PJ('/prompt',{prompt:WF(a),client_id:'c'});if(r.s!=200)return 'ERR '+r.s+'+'+r.b.slice(0,900);return JSON.parse(r.b).prompt_id}
 async function HS(i){const r=await PG('/history/'+i);if(r.s!=200)return{d:0};const e=JSON.parse(r.b)[i];if(!e)return{d:0};const f=[];for(const k in e.outputs)(e.outputs[k].images||[]).forEach(x=>f.push(x.filename));return{d:1,f:f}}
 const PV=(p,n)=>'https://'+p+'-8188.proxy.runpod.net/view?filename='+encodeURIComponent(n);
 const IM=(p,n)=>'<a target=_blank href="'+PV(p,n)+'"><img src="'+PV(p,n)+'" style="width:31%;margin:1%"></a>';
@@ -27,5 +27,6 @@ case 'loras':return new Response(JSON.stringify(await LR()));
 case 'ckpt':return new Response(await CK());
 case 'gen':return new Response(await GEN(q));
 case 'loradl':return new Response(await LDL(q.get('url')));
+case 'pod':return new Response((await PG(q.get('p')||'/system_stats',15000)).b);
 default:return Response.redirect(A+'/?'+q.toString(),302);
 }}catch(x){return new Response('ERR '+x.message)}}}
