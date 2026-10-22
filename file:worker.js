@@ -1,0 +1,1 @@
+export default {async fetch(req,env){var o='';for(var k in env){o=o+k+':'+typeof env[k]+' '}return new Response('N'+Object.keys(env).length+' '+o)}}
